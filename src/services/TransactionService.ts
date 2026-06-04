@@ -1,3 +1,8 @@
+import Log from "../decorators/logger";
+import MeasureTime from "../decorators/MeasureTime";
+import NotifyLowStock from "../decorators/NotifyLowStock";
+import Retry from "../decorators/Retry";
+import Validate from "../decorators/Validate";
 import BookModel from "../models/bookModel";
 import CustomerModel from "../models/customerModel";
 import TransactionModel from "../models/transactionsModel";
@@ -12,12 +17,15 @@ interface BorrowData {
 }
 
 export class TransactionService {
-  private checkLowStock(availableCopies: number, minCopies: number) {
-    if (availableCopies <= minCopies) {
-      return `Low stock warning: only ${availableCopies} copies left`;
-    }
-    return null;
-  }
+  // private checkLowStock(availableCopies: number, minCopies: number) {
+  //   if (availableCopies <= minCopies) {
+  //     return `Low stock warning: only ${availableCopies} copies left`;
+  //   }
+  //   return null;
+  // }
+   @Log
+   @NotifyLowStock
+   @Validate('bookId','name', 'phone', 'address', 'amountPaid')
   async purchaseBook(transactionData: any) {
     try {
       const book = await BookModel.findById(transactionData.bookId);
@@ -42,22 +50,27 @@ export class TransactionService {
         },
       });
 
-      const updatedBook = await BookModel.findByIdAndUpdate(
-        transactionData.bookId,
-        { $inc: { availableCopies: -1 } },
-        { new: true },
-      );
-      const notification = this.checkLowStock(
-        updatedBook!.availableCopies,
-        updatedBook!.minCopies,
-      );
-      return { success: true, data: { customer, transaction, notification } };
+      // const updatedBook = await BookModel.findByIdAndUpdate(
+      //   transactionData.bookId,
+      //   { $inc: { availableCopies: -1 } },
+      //   { new: true },
+      // );
+      // const notification = this.checkLowStock(
+      //   updatedBook!.availableCopies,
+      //   updatedBook!.minCopies,
+      // );
+      return { success: true, data: { customer, transaction, 
+       // notification
+       } };
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
       return { success: false, error: message };
     }
   }
 
+   @Log
+   @NotifyLowStock
+   @Validate('bookId','name', 'phone', 'address', 'returnDueDate','lateFeePerDay')
   async borrowBook(transactionData: BorrowData) {
     try {
       // Validate book exists
@@ -94,25 +107,28 @@ export class TransactionService {
       });
 
       // Deduct availableCopies
-      const updatedBook = await BookModel.findByIdAndUpdate(
-        transactionData.bookId,
-        { $inc: { availableCopies: -1 } },
-        { new: true },
-      );
+      // const updatedBook = await BookModel.findByIdAndUpdate(
+      //   transactionData.bookId,
+      //   { $inc: { availableCopies: -1 } },
+      //   { new: true },
+      // );
 
       // Check low stock
-      const notification = this.checkLowStock(
-        updatedBook!.availableCopies,
-        updatedBook!.minCopies,
-      );
+      // const notification = this.checkLowStock(
+      //   updatedBook!.availableCopies,
+      //   updatedBook!.minCopies,
+      // );
 
-      return { success: true, data: { customer, transaction, notification } };
+      return { success: true, data: { customer, transaction,
+        //  notification 
+        } };
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
       return { success: false, error: message };
     }
   }
 
+  @Log
   async returnBook(id: string) {
     try {
       const transaction = await TransactionModel.findById(id);
@@ -169,6 +185,8 @@ export class TransactionService {
     }
   }
 
+  @MeasureTime
+  @Retry()
   async getAllTransactions() {
     try {
       const transactions = await TransactionModel.find()

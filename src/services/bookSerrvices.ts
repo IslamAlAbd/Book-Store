@@ -1,3 +1,7 @@
+import Log from "../decorators/logger";
+import MeasureTime from "../decorators/MeasureTime";
+import Retry from "../decorators/Retry";
+import Validate from "../decorators/Validate";
 import BookModel, { BookCategory, BookContentType } from "../models/bookModel";
 
 interface BookData {
@@ -16,6 +20,9 @@ interface BookData {
 
 export class BookService {
 
+  @Log
+  @MeasureTime
+  @Retry(3)
   async getAllBooks() {
     try {
       const books = await BookModel.find();
@@ -26,6 +33,7 @@ export class BookService {
     }
   }
 
+   @Log
   async getBookById(id: string) {
     try {
       const book = await BookModel.findById(id);
@@ -37,6 +45,8 @@ export class BookService {
     }
   }
 
+   @Log
+   @Validate('title', 'ISBN', 'author', 'salePrice')
   async addBook(bookData: BookData) {
     try {
       const newBook = await BookModel.create(bookData);
@@ -47,6 +57,7 @@ export class BookService {
     }
   }
 
+   @Log
   async updateBook(id: string, bookData: BookData) {
     try {
       const book = await BookModel.findById(id);
@@ -64,6 +75,7 @@ export class BookService {
     }
   }
 
+   @Log
   async deleteBook(id: string) {
     try {
       const book = await BookModel.findById(id);
@@ -77,6 +89,8 @@ export class BookService {
     }
   }
 
+   @Log
+   @MeasureTime
   async search(key: string) {
     try {
       const books = await BookModel.find({

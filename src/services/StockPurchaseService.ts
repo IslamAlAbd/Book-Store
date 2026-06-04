@@ -1,3 +1,4 @@
+import Log from "../decorators/logger";
 import BookModel from "../models/bookModel";
 import StockPurchaseModel from "../models/StockPurchase";
 
@@ -9,6 +10,7 @@ interface StockPurchaseData {
 }
 
 export class StockPurchaseService {
+   @Log
   async restockBook(stockPurchase: StockPurchaseData) {
     try {
       const book = await BookModel.findById(stockPurchase.bookId);
